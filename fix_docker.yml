@@ -1,0 +1,22 @@
+---
+- name: Redémarrer Docker si arrêté
+  hosts: serveur_cible
+  become: yes
+  tasks:
+    - name: Vérifier le statut du conteneur fastapi-api
+      shell: docker inspect -f '{% raw %}{{.State.Running}}{% endraw %}' fastapi-api
+      register: container_status
+      ignore_errors: yes
+
+    - name: Démarrer fastapi-api s'il est arrêté
+      shell: cd /home/servertest/fastapi-app && docker compose up -d
+      become_user: servertest
+      when: container_status.rc != 0 or container_status.stdout | trim != "true"
+
+    - name: Vérifier que les containers tournent
+      command: docker ps
+      register: docker_check
+
+    - name: Afficher le statut
+      debug:
+        msg: "Docker status: {{ docker_check.stdout }}"

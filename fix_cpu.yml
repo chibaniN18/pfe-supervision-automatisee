@@ -1,0 +1,24 @@
+---
+- name: Corriger CPU élevé
+  hosts: serveur_cible
+  become: yes
+  tasks:
+    - name: Vérifier les processus gourmands en CPU
+      shell: ps aux --sort=-%cpu | head -10
+      register: cpu_processes
+
+    - name: Afficher les processus
+      debug:
+        msg: "{{ cpu_processes.stdout }}"
+
+    - name: Arrêter le processus stress si présent
+      shell: pkill stress || true
+      ignore_errors: yes
+
+    - name: Vérifier le CPU après correction
+      shell: top -bn1 | grep "Cpu(s)"
+      register: cpu_status
+
+    - name: Afficher le CPU
+      debug:
+        msg: "CPU: {{ cpu_status.stdout }}"

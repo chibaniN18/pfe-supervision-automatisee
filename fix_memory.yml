@@ -1,0 +1,24 @@
+---
+- name: Libérer la mémoire
+  hosts: serveur_cible
+  become: yes
+  tasks:
+    - name: Vider le cache mémoire
+      shell: sync && echo 3 > /proc/sys/vm/drop_caches
+      ignore_errors: yes
+
+    - name: Vérifier les processus gourmands
+      shell: ps aux --sort=-%mem | head -10
+      register: memory_processes
+
+    - name: Afficher les processus
+      debug:
+        msg: "{{ memory_processes.stdout }}"
+
+    - name: Vérifier la mémoire après nettoyage
+      shell: free -h
+      register: memory_status
+
+    - name: Afficher la mémoire
+      debug:
+        msg: "Mémoire: {{ memory_status.stdout }}"

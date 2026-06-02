@@ -1,0 +1,30 @@
+---
+- name: Nettoyer le disque
+  hosts: serveur_cible
+  become: yes
+  tasks:
+    - name: Nettoyer les logs anciens
+      shell: find /var/log -type f -name "*.log" -mtime +7 -delete
+      ignore_errors: yes
+
+    - name: Nettoyer les fichiers temporaires
+      shell: rm -rf /tmp/*
+      ignore_errors: yes
+
+    - name: Nettoyer les anciennes images Docker
+      shell: docker image prune -f
+      become_user: servertest
+      ignore_errors: yes
+
+    - name: Nettoyer les containers arrêtés
+      shell: docker container prune -f
+      become_user: servertest
+      ignore_errors: yes
+
+    - name: Vérifier l'espace disque après nettoyage
+      shell: df -h /
+      register: disk_status
+
+    - name: Afficher l'espace disque
+      debug:
+        msg: "Espace disque: {{ disk_status.stdout }}"
